@@ -10,7 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-      /* 保留原有美观样式，无修改 */
+      /* 保留原有所有美观样式 */
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Helvetica Neue',
           Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
@@ -67,14 +67,14 @@
         bottom: 0;
         right: 0;
       }
-      /* 隐藏Canvas（仅用于绘制，不直接展示） */
+      /* 隐藏Canvas，仅用于绘制 */
       #drawCanvas {
         display: none;
       }
     </style>
   </head>
   <body class="bg-gradient-to-br from-amber-50 via-stone-50 to-amber-100 min-h-screen">
-    <!-- 背景装饰（保留原有） -->
+    <!-- 背景装饰 -->
     <div class="fixed inset-0 opacity-5 pointer-events-none">
       <div class="absolute top-20 left-10 w-32 h-32 border-2 border-amber-400 rounded-full"></div>
       <div class="absolute top-40 right-20 w-24 h-24 border border-stone-400 rounded-full"></div>
@@ -85,7 +85,7 @@
     </div>
 
     <div class="relative z-10 max-w-4xl mx-auto px-4 py-8 md:py-12">
-      <!-- 报头（保留原有） -->
+      <!-- 报头 -->
       <header class="text-center mb-8 md:mb-12 fade-in">
         <div class="inline-block relative">
           <div class="flex items-center justify-center mb-4 gap-2">
@@ -143,7 +143,7 @@
               <h2 class="text-2xl md:text-3xl font-semibold text-stone-800 brush-text">自定义新闻图片</h2>
             </div>
 
-            <!-- 日期选择器（保留原有功能） -->
+            <!-- 日期选择器 -->
             <div class="flex flex-wrap gap-2">
               <input
                 type="date"
@@ -177,14 +177,14 @@
             </div>
           </div>
 
-          <!-- 1. 隐藏的Canvas：用于绘制图片（不直接展示） -->
-          <canvas id="drawCanvas" width="750" height="1334"></canvas>
-          <!-- 2. 展示绘制完成的图片 -->
+          <!-- 动态Canvas：高度随内容自适应 -->
+          <canvas id="drawCanvas" width="750"></canvas>
+          <!-- 展示绘制完成的图片 -->
           <div id="newsImageContainer" class="min-h-48 flex justify-center items-center"></div>
         </section>
       </div>
 
-      <!-- 简化页脚（保留原有） -->
+      <!-- 页脚 -->
       <footer
         class="text-center py-8 text-stone-600 space-y-3 fade-in"
         style="animation-delay: 0.4s"
@@ -238,7 +238,7 @@
         dateInput.value = initialDate
         updateHeaderDate(new Date(initialDate))
         updateButtonStates()
-        drawCustomNewsImage() // 初始化绘制自定义图片
+        drawCustomNewsImage()
       }
 
       // 格式化日期
@@ -286,7 +286,33 @@
         drawCustomNewsImage()
       }
 
-      // 核心函数：绘制自定义早报图片（删除他人信息，添加自己的信息）
+      // 【核心工具函数】Canvas文字自动换行（解决超长文字不换行问题）
+      function drawTextWrap(ctx, text, x, y, maxWidth, lineHeight) {
+        const words = text.split('')
+        let currentText = ''
+        let currentX = x
+        let currentY = y
+
+        // 逐字拆分，判断是否超出最大宽度
+        for (let i = 0; i < words.length; i++) {
+          const testText = currentText + words[i]
+          const testWidth = ctx.measureText(testText).width
+          if (testWidth > maxWidth && i > 0) {
+            // 超出宽度，绘制当前行，重置内容
+            ctx.fillText(currentText, currentX, currentY)
+            currentText = words[i]
+            currentY += lineHeight
+          } else {
+            currentText = testText
+          }
+        }
+        // 绘制最后一行
+        ctx.fillText(currentText, currentX, currentY)
+        // 返回最后一行的Y坐标，用于计算总高度
+        return currentY
+      }
+
+      // 【核心函数】自定义绘制早报图片（解决所有需求）
       async function drawCustomNewsImage() {
         const date = document.getElementById('dateInput').value
         if (!date) {
@@ -305,73 +331,117 @@
         `
 
         try {
-          // 步骤1：获取JSON数据（绘制图片的素材）
+          // 1. 获取接口JSON数据（新闻+微语）
           const jsonUrl = `https://60s-static.viki.moe/60s/${date}.json`
           const response = await fetch(jsonUrl)
           if (!response.ok) throw new Error('JSON数据加载失败')
           const newsData = await response.json()
 
-          // 步骤2：获取Canvas上下文，准备绘制
+          // 2. 初始化Canvas基础配置
           const canvas = document.getElementById('drawCanvas')
           const ctx = canvas.getContext('2d')
-          const canvasWidth = canvas.width
-          const canvasHeight = canvas.height
+          const canvasWidth = 750 // 固定画布宽度，适配手机
+          const paddingX = 50 // 左右内边距
+          const contentMaxWidth = canvasWidth - paddingX * 2 // 文字最大绘制宽度
+          // 基础样式配置（可按需修改）
+          const style = {
+            titleFont: 'bold 36px PingFang SC, Microsoft YaHei',
+            titleColor: '#854d0e',
+            newsFont: '24px PingFang SC, Microsoft YaHei',
+            newsColor: '#1f2937',
+            tipFont: 'italic 24px PingFang SC, Microsoft YaHei',
+            tipColor: '#d97706',
+            customFont: '22px PingFang SC, Microsoft YaHei',
+            customColor: '#6b7280',
+            lineHeight: 45, // 普通行高
+            bigLineHeight: 60, // 分隔/微语行高
+            titleTop: 60, // 标题顶部间距
+            separatorTop: 80, // 分隔线顶部间距
+            newsTop: 120, // 新闻列表顶部间距
+          }
 
-          // 步骤3：开始自定义绘制（完全由你掌控，想画什么就画什么）
-          // 3.1 绘制背景（白色底，可改颜色）
+          // 3. 预计算所有内容的高度，动态设置Canvas高度（无空白核心）
+          ctx.font = style.newsFont
+          let totalContentHeight = style.newsTop // 初始高度（新闻开始前）
+          // 预计算每条新闻的高度（含自动换行）
+          for (let i = 0; i < newsData.news.length; i++) {
+            const newsText = `${i + 1}. ${newsData.news[i]}`
+            // 计算单条新闻换行后的总高度
+            const testLines = Math.ceil(ctx.measureText(newsText).width / contentMaxWidth)
+            totalContentHeight += testLines * style.lineHeight
+          }
+          // 加上微语、自定义信息、底部间距的高度
+          totalContentHeight += style.bigLineHeight * 2 // 微语区域
+          totalContentHeight += style.lineHeight * 2 + 40 // 自定义信息+底部留白
+          // 动态设置Canvas高度，完全适配内容
+          canvas.height = totalContentHeight
+
+          // 4. 开始绘制内容（逐区域绘制）
+          // 4.1 绘制白色背景
           ctx.fillStyle = '#ffffff'
           ctx.fillRect(0, 0, canvasWidth, canvasHeight)
 
-          // 3.2 绘制图片标题（顶部）
-          ctx.fillStyle = '#854d0e' // 标题颜色
-          ctx.font = 'bold 36px PingFang SC, Microsoft YaHei' // 字体大小/样式
+          // 4.2 绘制标题
+          ctx.fillStyle = style.titleColor
+          ctx.font = style.titleFont
           ctx.textAlign = 'center'
-          ctx.fillText(`每日60s早报 · ${date}`, canvasWidth / 2, 60)
+          ctx.fillText(`每日60s早报 · ${date}`, canvasWidth / 2, style.titleTop)
 
-          // 3.3 绘制分隔线（标题下方）
+          // 4.3 绘制标题下分隔线
           ctx.strokeStyle = '#fbbf24'
           ctx.lineWidth = 2
           ctx.beginPath()
-          ctx.moveTo(100, 80)
-          ctx.lineTo(650, 80)
+          ctx.moveTo(paddingX, style.separatorTop)
+          ctx.lineTo(canvasWidth - paddingX, style.separatorTop)
           ctx.stroke()
 
-          // 3.4 绘制新闻列表（核心内容，不绘制官方底部信息）
-          ctx.fillStyle = '#1f2937' // 新闻文字颜色
-          ctx.font = '24px PingFang SC, Microsoft YaHei' // 新闻字体大小
+          // 4.4 绘制新闻列表（自动换行）
+          ctx.fillStyle = style.newsColor
+          ctx.font = style.newsFont
           ctx.textAlign = 'left'
-          const newsStartY = 120 // 新闻开始的Y坐标
-          const lineHeight = 45 // 每行新闻的行高
-          const newsMaxWidth = 700 // 新闻最大宽度
+          let currentNewsY = style.newsTop
+          // 遍历新闻，逐行绘制+自动换行
+          for (let i = 0; i < newsData.news.length; i++) {
+            const newsText = `${i + 1}. ${newsData.news[i]}`
+            // 绘制并获取当前新闻最后一行的Y坐标
+            currentNewsY = drawTextWrap(ctx, newsText, paddingX, currentNewsY, contentMaxWidth, style.lineHeight)
+            // 换行后追加行高，保证间距
+            currentNewsY += style.lineHeight
+          }
 
-          // 遍历新闻数组，绘制每条新闻
-          newsData.news.forEach((news, index) => {
-            const y = newsStartY + (index * lineHeight)
-            // 绘制新闻序号 + 内容
-            ctx.fillText(`${index + 1}. ${news}`, 50, y, newsMaxWidth)
-          })
-
-          // 3.5 绘制自定义信息（替换官方底部信息，添加你自己的内容）
-          const customInfoY = newsStartY + (newsData.news.length * lineHeight) + 60
-          ctx.fillStyle = '#d97706' // 自定义信息颜色
-          ctx.font = 'bold 28px PingFang SC, Microsoft YaHei'
+          // 4.5 绘制每日微语（tip）- 保留核心需求
+          ctx.fillStyle = style.tipColor
+          ctx.font = style.tipFont
           ctx.textAlign = 'center'
-          // 自定义内容1：你的签名/公众号
-          ctx.fillText('—— 自定义早报 · 专属制作', canvasWidth / 2, customInfoY)
-          // 自定义内容2：联系方式/备注（可选）
-          ctx.font = '20px PingFang SC, Microsoft YaHei'
-          ctx.fillText('每日更新 · 仅供学习交流', canvasWidth / 2, customInfoY + 40)
+          const tipY = currentNewsY + style.bigLineHeight / 2
+          ctx.fillText(`💬 每日微语：${newsData.tip || '心有所向，素履以往'}`, canvasWidth / 2, tipY)
+          // 微语下分隔线
+          ctx.strokeStyle = '#fcd34d'
+          ctx.beginPath()
+          ctx.moveTo(paddingX + 50, tipY + 20)
+          ctx.lineTo(canvasWidth - paddingX - 50, tipY + 20)
+          ctx.stroke()
 
-          // 步骤4：将Canvas转换成图片，展示在页面上
-          const customImageUrl = canvas.toDataURL('image/png') // 转成PNG图片
+          // 4.6 绘制自定义信息（替换官方底部信息，可按需修改）
+          ctx.fillStyle = style.customColor
+          ctx.font = style.customFont
+          const customY1 = tipY + style.bigLineHeight
+          const customY2 = customY1 + style.lineHeight
+          ctx.fillText('—— 自定义60s早报 · 专属制作', canvasWidth / 2, customY1)
+          ctx.fillText('每日更新 · 数据来源于公开网络', canvasWidth / 2, customY2)
+
+          // 5. Canvas转PNG图片，展示到页面
+          const customImageUrl = canvas.toDataURL('image/png', 1.0) // 1.0为图片质量
           container.innerHTML = `
             <div class="w-full max-w-2xl mx-auto bg-stone-50/50 rounded-lg p-4 border border-stone-200">
                 <img
                     src="${customImageUrl}"
                     alt="${date} 自定义60秒早报图片"
                     class="w-full h-auto rounded shadow-lg"
+                    title="点击可保存图片"
                 >
             </div>
+            <p class="text-center text-sm text-stone-500 mt-3">图片已自适应内容，无多余空白 | 点击图片可保存</p>
           `
         } catch (error) {
           container.innerHTML = `
