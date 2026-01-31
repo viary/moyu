@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <title>每天 60s 读懂世界 - 自定义早报图片</title>
-    <meta name="description" content="每天60秒读懂世界 - 自定义每日新闻图片" />
+    <title>资源鉴-60秒资讯简报</title>
+    <meta name="description" content="资源鉴-60秒资讯简报" />
     <meta name="theme-color" content="#fef3c7" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -97,7 +97,7 @@
             每天<span class="text-amber-700">60s</span>读懂世界
           </h1>
           <p class="text-base md:text-lg text-stone-600 tracking-widest font-light mb-4">
-            自定义新闻图片 · 日期可选
+            精选每日要闻 · 日期可选
           </p>
           <div class="flex items-center justify-center gap-4 text-sm text-stone-500">
             <span id="currentDate" class="tracking-wide"></span>
@@ -120,7 +120,7 @@
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-4 border-b border-stone-200/60">
             <div class="flex items-center gap-3">
               <div class="seal text-amber-700 text-xs bg-amber-50">今 日</div>
-              <h2 class="text-2xl md:text-3xl font-semibold text-stone-800 brush-text">自定义新闻图片</h2>
+              <h2 class="text-2xl md:text-3xl font-semibold text-stone-800 brush-text">资源鉴-新闻早报</h2>
             </div>
             <div class="flex flex-wrap gap-2">
               <input type="date" id="dateInput" onchange="updateButtonStates(); drawCustomNewsImage();" class="px-3 py-2 bg-amber-50/50 border border-stone-300 rounded-lg text-stone-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all" />
@@ -140,7 +140,7 @@
           <div class="w-1 h-1 bg-amber-400 rounded-full"></div>
           <div class="w-12 h-px bg-gradient-to-l from-transparent via-amber-400 to-transparent"></div>
         </div>
-        <p class="text-sm tracking-wide">自定义早报图片 ❋ 数据来源于公开网络</p>
+        <p class="text-sm tracking-wide">公众号：资源鉴 ❋ 数据来源于公开网络</p>
         <div class="flex items-center justify-center gap-2 mt-3">
           <div class="w-12 h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent"></div>
           <div class="w-0.5 h-0.5 bg-amber-400 rounded-full"></div>
@@ -407,7 +407,7 @@
           ctx.fillStyle = style.customColor
           ctx.font = style.customFont
           ctx.textAlign = 'left'
-          const customText1 = '—— 自定义60s早报 · 专属制作'
+          const customText1 = '—— 60s新闻早报 · 长按保存'
           const customText2 = '每日更新 · 数据来源于公开网络'
           ctx.fillText(customText1, paddingX, currentY)
           ctx.fillText(customText2, paddingX, currentY + style.customLineHeight)
