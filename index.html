@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <title>每日摸鱼海报 - 无重叠溢出版</title>
-    <meta name="description" content="每日摸鱼海报 官方接口全数据 进度条可视化 无重叠无溢出" />
+    <title>每日摸鱼海报 - 正常绘制版</title>
+    <meta name="description" content="每日摸鱼海报 官方接口全数据 进度条可视化 正常绘制无错误" />
     <meta name="theme-color" content="#fef3c7" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -99,7 +99,7 @@
             每日<span class="text-amber-700">摸鱼</span>专属海报
           </h1>
           <p class="text-base md:text-lg text-stone-600 tracking-widest font-light mb-4">
-            官方接口全数据 · 进度条可视化 · 无重叠无溢出
+            官方接口全数据 · 进度条可视化 · 正常绘制无错误
           </p>
           <div class="flex items-center justify-center gap-4 text-sm text-stone-500">
             <span id="currentDate" class="tracking-wide"></span>
@@ -232,12 +232,13 @@
         drawCustomMoYuImage()
       }
 
-      // Canvas文字自动换行工具函数（返回实际占用高度，用于动态计算画布）
+      // 【修复】Canvas文字自动换行工具函数（返回实际占用高度，无提前引用变量）
       function drawTextWrap(ctx, text, x, y, maxWidth, lineHeight) {
         if (!ctx || !text) return { finalY: y, totalHeight: 0 }
         
+        // 给行高设置默认值，避免未传入时出错
+        const _lineHeight = lineHeight || 35
         const _maxWidth = maxWidth || 650
-        const _lineHeight = lineHeight || 35 // 减小行高，避免重叠
         let curText = ''
         let curY = y
         let lineCount = 0 // 统计行数
@@ -265,18 +266,7 @@
         return { finalY: curY + _lineHeight/2, totalHeight: totalHeight }
       }
 
-      // 【新增】计算文本块所需高度（用于预计算画布，无重叠）
-      function calculateTextBlockHeight(ctx, textList, maxWidth, lineHeight) {
-        let totalHeight = 0
-        ctx.font = `20px PingFang SC, Microsoft YaHei` // 对应内容字体
-        for (let text of textList) {
-          const { totalHeight: lineHeight } = drawTextWrap(ctx, text, 0, 0, maxWidth, lineHeight)
-          totalHeight += lineHeight + 10 // 行间距
-        }
-        return totalHeight
-      }
-
-      // 【修复】绘制彩色进度条（减小间距，返回精准高度，避免溢出）
+      // 【修复】绘制彩色进度条（减小间距，返回精准高度，无提前引用变量）
       function drawProgressBar(ctx, x, y, width, height, progress, total, color, label) {
         const percent = Math.round((progress / total) * 100)
         const fillWidth = (progress / total) * width
@@ -285,7 +275,7 @@
         ctx.strokeStyle = color
         ctx.lineWidth = 2
         ctx.beginPath()
-        ctx.roundRect(x, y, width, height, 6) // 减小圆角，更精致
+        ctx.roundRect(x, y, width, height, 6)
         ctx.stroke()
         
         // 2. 绘制进度条填充（渐变）
@@ -325,6 +315,18 @@
           (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
           (B < 255 ? B < 1 ? 0 : B : 255)
         ).toString(16).slice(1)
+      }
+
+      // 【修复】计算文本块所需高度（独立传入行高，不依赖未定义的style）
+      function calculateTextBlockHeight(ctx, textList, maxWidth, lineHeight) {
+        let totalHeight = 0
+        const _lineHeight = lineHeight || 35 // 独立默认值，不依赖外部style
+        ctx.font = `18px PingFang SC, Microsoft YaHei` // 固定对应内容字体，避免外部依赖
+        for (let text of textList) {
+          const { totalHeight: lineHeight } = drawTextWrap(ctx, text, 0, 0, maxWidth, _lineHeight)
+          totalHeight += lineHeight + 10 // 行间距
+        }
+        return totalHeight
       }
 
       // ====================== 二维码配置（仅需替换这里的Base64）======================
@@ -462,7 +464,7 @@
         }
       }
 
-      // 核心：绘制自定义摸鱼海报（修复重叠+溢出，精准高度计算）
+      // 核心：绘制自定义摸鱼海报（修复变量初始化错误，正常绘制）
       async function drawCustomMoYuImage() {
         const date = document.getElementById('dateInput').value
         if (!date) {
@@ -503,24 +505,24 @@
           let totalContentHeight = 0 // 动态计算画布总高度
           let currentY = 0 // 实时跟踪绘制Y坐标，避免重叠
 
-          // 3. 样式配置（优化字号和间距，避免重叠）
+          // 3. 【先定义style对象】避免后续函数提前引用（核心修复点）
           const style = {
-            titleFont: 'bold 34px PingFang SC, Microsoft YaHei', // 减小标题字号
+            titleFont: 'bold 34px PingFang SC, Microsoft YaHei',
             titleColor: '#854d0e',
-            subtitleFont: '20px PingFang SC, Microsoft YaHei', // 减小副标题字号
+            subtitleFont: '20px PingFang SC, Microsoft YaHei',
             subtitleColor: '#d97706',
-            contentFont: '18px PingFang SC, Microsoft YaHei', // 减小内容字号
+            contentFont: '18px PingFang SC, Microsoft YaHei',
             contentColor: '#1f2937',
-            quoteFont: 'bold 22px PingFang SC, Microsoft YaHei', // 减小语录字号
+            quoteFont: 'bold 22px PingFang SC, Microsoft YaHei',
             quoteColor: '#b45309',
-            labelFont: '16px PingFang SC, Microsoft YaHei', // 减小标签字号
+            labelFont: '16px PingFang SC, Microsoft YaHei',
             labelColor: '#6b7280',
             customFont: '16px PingFang SC, Microsoft YaHei',
             customColor: '#6b7280',
-            lineHeight: 35, // 减小基础行高
-            smallGap: 10,   // 小间距
-            mediumGap: 20,  // 中等间距
-            bigGap: 30,     // 大间距（替代之前过大的bigLineHeight）
+            lineHeight: 35,
+            smallGap: 10,
+            mediumGap: 20,
+            bigGap: 30,
             customLineHeight: 24,
             // 进度条颜色（丰富且协调）
             progressColors: {
@@ -530,57 +532,59 @@
             }
           }
 
-          // 4. 第一步：预计算所有模块的高度（确保画布能容纳所有内容，无溢出）
-          // 4.1 预计算标题区高度
-          const titleAreaHeight = 80 + style.mediumGap // 标题+副标题+间距
-          // 4.2 预计算语录区高度
-          const quoteAreaHeight = 60 + style.mediumGap // 语录+背景+间距
-          // 4.3 预计算今日状态区高度
+          // 4. 定义所有文本模块（依赖style前先定义，避免错误）
           const todayStateText = [
             `• 状态：${moYuData.todayState.isWeekend ? '🟢 周末放肆摸鱼' : moYuData.todayState.isHoliday ? `🟡 节假日（${moYuData.todayState.holidayName}）` : '🔴 工作日谨慎摸鱼'}`,
             `• 节气：${moYuData.todayState.solarTerm}`,
             `• 农历节日：${moYuData.todayState.lunarFestivals}`
           ]
-          const todayStateAreaHeight = calculateTextBlockHeight(ctx, todayStateText, contentMaxWidth - 20, style.lineHeight) + style.bigGap
-          // 4.4 预计算进度条区高度（3个进度条+标签+间距）
-          const progressAreaHeight = (25 + 15) * 3 + style.mediumGap + style.smallGap // 进度条高度+间距*3 + 标签间距
-          // 4.5 预计算假期倒计时区高度
           const holidayCountdownText = [
             `• 当前假期：${moYuData.holidayData.current}`,
             `• 下次假期：${moYuData.holidayData.next}`,
             `• 下次周末：${moYuData.holidayData.nextWeekend}`,
             `• 倒计时：距周末${moYuData.countdownData.toWeekEnd}天 · 距年末${moYuData.countdownData.toYearEnd}天`
           ]
+
+          // 5. 第二步：预计算所有模块的高度（此时style已定义，无提前引用）
+          // 5.1 预计算标题区高度
+          const titleAreaHeight = 80 + style.mediumGap
+          // 5.2 预计算语录区高度
+          const quoteAreaHeight = 60 + style.mediumGap
+          // 5.3 预计算今日状态区高度（传入已定义的style.lineHeight）
+          const todayStateAreaHeight = calculateTextBlockHeight(ctx, todayStateText, contentMaxWidth - 20, style.lineHeight) + style.bigGap
+          // 5.4 预计算进度条区高度
+          const progressAreaHeight = (25 + 15) * 3 + style.mediumGap + style.smallGap
+          // 5.5 预计算假期倒计时区高度
           const holidayAreaHeight = calculateTextBlockHeight(ctx, holidayCountdownText, contentMaxWidth - 20, style.lineHeight) + style.bigGap
-          // 4.6 预计算自定义内容区高度
-          const customAreaHeight = style.customLineHeight * 2 + style.mediumGap + 100 // 自定义文字+二维码+间距
+          // 5.6 预计算自定义内容区高度
+          const customAreaHeight = style.customLineHeight * 2 + style.mediumGap + 100
 
-          // 4.7 汇总计算画布总高度（精准适配，无溢出，无空白）
+          // 5.7 汇总计算画布总高度（精准适配，无溢出）
           totalContentHeight = titleAreaHeight + quoteAreaHeight + todayStateAreaHeight + progressAreaHeight + holidayAreaHeight + customAreaHeight
-          totalContentHeight = Math.max(800, totalContentHeight) // 兜底最小高度，避免过矮
-          canvas.height = totalContentHeight // 设定最终画布高度
+          totalContentHeight = Math.max(800, totalContentHeight)
+          canvas.height = totalContentHeight
 
-          // 5. 第二步：开始绘制海报（按预计算高度，精准排版，无重叠）
-          // 5.1 白色背景
+          // 6. 第三步：开始绘制海报（按预计算高度，精准排版）
+          // 6.1 白色背景
           ctx.fillStyle = '#ffffff'
           ctx.fillRect(0, 0, canvasWidth, totalContentHeight)
           
-          // 5.2 绘制标题（带农历+生肖，减小字号，避免溢出）
-          currentY = 70 // 初始标题Y坐标
+          // 6.2 绘制标题（带农历+生肖）
+          currentY = 70
           ctx.fillStyle = style.titleColor
           ctx.font = style.titleFont
           ctx.textAlign = 'center'
           const titleText = `每日摸鱼海报 · ${moYuData.dateInfo.gregorian} ${moYuData.dateInfo.weekday}`
           ctx.fillText(titleText, canvasWidth / 2, currentY)
-          // 副标题：农历+干支+生肖（减小字号，简化文本）
-          currentY += 35 // 减小副标题间距
+          // 副标题
+          currentY += 35
           ctx.font = style.subtitleFont
           ctx.fillStyle = style.subtitleColor
           const subTitleText = `${moYuData.dateInfo.lunar} · ${moYuData.dateInfo.ganZhi} · 生肖${moYuData.dateInfo.zodiac}`
           ctx.fillText(subTitleText, canvasWidth / 2, currentY)
           
-          // 5.3 标题分隔线（彩色渐变，减小高度）
-          currentY += 25 // 减小分隔线间距
+          // 6.3 标题分隔线（彩色渐变）
+          currentY += 25
           const gradientLine = ctx.createLinearGradient(paddingX, currentY, canvasWidth - paddingX, currentY)
           gradientLine.addColorStop(0, style.progressColors.week)
           gradientLine.addColorStop(0.5, style.progressColors.month)
@@ -592,17 +596,17 @@
           ctx.lineTo(canvasWidth - paddingX, currentY)
           ctx.stroke()
           
-          // 5.4 绘制摸鱼语录（高亮+背景，减小背景高度，避免重叠）
+          // 6.4 绘制摸鱼语录
           currentY += style.mediumGap
           ctx.fillStyle = 'rgba(251, 191, 36, 0.1)'
-          ctx.fillRect(paddingX - 10, currentY - 10, contentMaxWidth + 20, 50) // 减小背景高度
+          ctx.fillRect(paddingX - 10, currentY - 10, contentMaxWidth + 20, 50)
           ctx.fillStyle = style.quoteColor
           ctx.font = style.quoteFont
           ctx.textAlign = 'center'
-          ctx.fillText(`💬 ${moYuData.moyuQuote}`, canvasWidth / 2, currentY + 25) // 调整语录Y坐标
-          currentY += 50 + style.smallGap // 减小语录下方间距
+          ctx.fillText(`💬 ${moYuData.moyuQuote}`, canvasWidth / 2, currentY + 25)
+          currentY += 50 + style.smallGap
           
-          // 5.5 绘制今日状态模块（精准跟踪Y坐标，无重叠）
+          // 6.5 绘制今日状态模块
           ctx.fillStyle = style.labelColor
           ctx.font = style.labelFont
           ctx.textAlign = 'left'
@@ -612,36 +616,36 @@
           ctx.font = style.contentFont
           for (let text of todayStateText) {
             const { finalY } = drawTextWrap(ctx, text, paddingX + 10, currentY, contentMaxWidth - 20, style.lineHeight)
-            currentY = finalY + 5 // 减小行间距，避免重叠
+            currentY = finalY + 5
           }
-          currentY += style.mediumGap // 减小模块下方间距
+          currentY += style.mediumGap
           
-          // 5.6 绘制进度条模块（3个进度条，精准高度，无溢出）
+          // 6.6 绘制进度条模块
           ctx.fillStyle = style.labelColor
           ctx.font = style.labelFont
           ctx.fillText('📊 时间进度', paddingX, currentY)
           currentY += style.mediumGap
-          // 本周进度条（蓝色）
+          // 本周进度条
           currentY = drawProgressBar(
-            ctx, paddingX + 20, currentY, progressBarWidth, 20, // 减小进度条高度
+            ctx, paddingX + 20, currentY, progressBarWidth, 20,
             moYuData.progressData.week.passed, moYuData.progressData.week.total,
             style.progressColors.week, '本周进度'
           )
-          // 本月进度条（绿色）
+          // 本月进度条
           currentY = drawProgressBar(
             ctx, paddingX + 20, currentY, progressBarWidth, 20,
             moYuData.progressData.month.passed, moYuData.progressData.month.total,
             style.progressColors.month, '本月进度'
           )
-          // 今年进度条（橙色）
+          // 今年进度条
           currentY = drawProgressBar(
             ctx, paddingX + 20, currentY, progressBarWidth, 20,
             moYuData.progressData.year.passed, moYuData.progressData.year.total,
             style.progressColors.year, '今年进度'
           )
-          currentY += style.mediumGap // 减小进度条下方间距
+          currentY += style.mediumGap
           
-          // 5.7 绘制假期+倒计时模块（精准跟踪Y坐标，避免溢出图片外）
+          // 6.7 绘制假期+倒计时模块
           ctx.fillStyle = style.labelColor
           ctx.font = style.labelFont
           ctx.fillText('⏳ 假期&倒计时', paddingX, currentY)
@@ -650,20 +654,20 @@
           ctx.font = style.contentFont
           for (let text of holidayCountdownText) {
             const { finalY } = drawTextWrap(ctx, text, paddingX + 10, currentY, contentMaxWidth - 20, style.lineHeight)
-            currentY = finalY + 5 // 减小行间距，避免重叠
+            currentY = finalY + 5
           }
-          currentY += style.mediumGap // 减小模块下方间距
+          currentY += style.mediumGap
           
-          // 5.8 绘制底部分隔线（和顶部呼应，减小高度）
+          // 6.8 绘制底部分隔线
           ctx.strokeStyle = gradientLine
           ctx.lineWidth = 1
           ctx.beginPath()
           ctx.moveTo(paddingX + 50, currentY)
           ctx.lineTo(canvasWidth - paddingX - 50, currentY)
           ctx.stroke()
-          currentY += style.mediumGap // 减小分隔线下间距
+          currentY += style.mediumGap
           
-          // 5.9 绘制自定义内容+二维码（精准Y坐标，无溢出）
+          // 6.9 绘制自定义内容+二维码
           ctx.fillStyle = style.customColor
           ctx.font = style.customFont
           ctx.textAlign = 'left'
@@ -672,10 +676,9 @@
           ctx.fillText(customText1, paddingX, currentY)
           ctx.fillText(customText2, paddingX, currentY + style.customLineHeight)
           
-          // 绘制二维码+扫码提示（精准定位，不溢出）
+          // 绘制二维码+扫码提示
           const qrX = canvasWidth - QRCODE_CONFIG.size - QRCODE_CONFIG.marginRight
           const qrY = currentY - (QRCODE_CONFIG.size - style.customLineHeight * 2) / 2
-          // 确保二维码不超出画布
           const safeQrY = Math.min(qrY, totalContentHeight - QRCODE_CONFIG.size - 20)
           // 扫码小字
           ctx.font = `${QRCODE_CONFIG.scanTextSize}px PingFang SC, Microsoft YaHei`
@@ -687,7 +690,7 @@
           // 二维码
           ctx.drawImage(qrImg, qrX, safeQrY, QRCODE_CONFIG.size, QRCODE_CONFIG.size)
 
-          // 6. 转换为高清图片展示（无溢出，无重叠）
+          // 7. 转换为高清图片展示
           const customImageUrl = canvas.toDataURL('image/png', 1.0)
           if (!customImageUrl) throw new Error('Canvas转图片失败')
           container.innerHTML = `
