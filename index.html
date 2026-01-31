@@ -193,35 +193,55 @@
             }
         }
 
-        // 重新设计的进度条绘制函数 - 解决所有重叠问题
+        // 重新设计的进度条绘制函数 - 将文字集成到进度条内部
         function drawProgress(ctx, x, y, width, progress, color, label, value) {
-            // 1. 绘制标签文字（在进度条上方更远的位置）
-            ctx.fillStyle = '#1e293b';
-            ctx.font = 'bold 18px sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            ctx.fillText(label, x, y - 40); // 增加到40px距离
-            
-            // 2. 绘制百分比文字（也在进度条上方更远的位置）
-            ctx.fillStyle = color;
-            ctx.textAlign = 'right';
-            ctx.fillText(value, x + width, y - 40); // 增加到40px距离
-            
-            // 3. 绘制进度条背景
+            // 绘制进度条背景
             ctx.fillStyle = '#f3f4f6';
             ctx.beginPath();
-            ctx.roundRect(x, y, width, 30, 15);
+            ctx.roundRect(x, y, width, 40, 20);
             ctx.fill();
             
-            // 4. 绘制进度条
+            // 绘制进度条前景
             ctx.fillStyle = color;
-            const progressWidth = Math.max(30, width * progress);
+            const progressWidth = Math.max(40, width * progress);
             ctx.beginPath();
-            ctx.roundRect(x, y, progressWidth, 30, 15);
+            ctx.roundRect(x, y, progressWidth, 40, 20);
             ctx.fill();
             
-            // 5. 返回下一个Y坐标（大幅增加间距）
-            return y + 80; // 进度条高度30 + 间距50（之前是30+35=65）
+            // 在进度条内部左侧绘制黑色文字（进度名称）
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 18px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            
+            // 根据进度宽度决定文字绘制位置
+            // 如果进度宽度足够显示文字，就绘制在进度条内部左侧
+            if (progressWidth > 120) {
+                ctx.fillText(label, x + 20, y + 20);
+            } else {
+                // 如果进度条太短，就在进度条外部右侧绘制
+                ctx.fillText(label, x + width + 15, y + 20);
+            }
+            
+            // 在进度条内部右侧绘制黑色文字（天数/百分比）
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 16px sans-serif';
+            ctx.textAlign = 'right';
+            
+            // 检查文字宽度是否适合放在进度条内部
+            const textMetrics = ctx.measureText(value);
+            const textWidth = textMetrics.width + 40; // 加一些边距
+            
+            if (progressWidth > textWidth) {
+                // 在进度条内部右侧绘制
+                ctx.fillText(value, x + progressWidth - 20, y + 20);
+            } else {
+                // 在进度条外部右侧绘制
+                ctx.fillText(value, x + width + 15, y + 20);
+            }
+            
+            // 返回下一个Y坐标
+            return y + 60; // 进度条高度40 + 间距20
         }
 
         // 加载二维码
@@ -337,11 +357,11 @@
                 }
                 y += 30;
                 
-                // 4. 时间进度 - 重新设计布局，大幅增加间距
+                // 4. 时间进度 - 集成到进度条内部
                 ctx.fillStyle = '#1e293b';
                 ctx.font = 'bold 24px sans-serif';
                 ctx.fillText('📊 时间进度', padding, y);
-                y += 60; // 大幅增加标题和进度条之间的间距
+                y += 40;
                 
                 // 本周进度
                 const weekProgress = data.progress.week.passed / data.progress.week.total;
@@ -384,7 +404,7 @@
                 ];
                 
                 holidayLines.forEach(line => {
-                    if (y < 1100) {
+                    if (y < 1000) {
                         ctx.fillText(line, padding, y);
                         y += 35;
                     }
@@ -427,7 +447,7 @@
                 
                 y = lineY + 50;
                 
-                // 7. 底部信息（紧贴边框，不留距离）
+                // 7. 底部信息（去掉版权信息，只保留二维码和说明）
                 // 分隔线
                 ctx.strokeStyle = '#e5e7eb';
                 ctx.lineWidth = 1;
@@ -437,7 +457,7 @@
                 ctx.moveTo(padding, dividerY);
                 ctx.lineTo(750 - padding, dividerY);
                 ctx.stroke();
-                y = dividerY + 40;
+                y = dividerY + 30;
                 
                 // 左侧文本
                 ctx.fillStyle = '#6b7280';
@@ -451,10 +471,10 @@
                 ctx.font = '16px sans-serif';
                 ctx.fillText('本海报仅供娱乐，摸鱼虽好，工作也要认真哦～', padding, textY + 90);
                 
-                // 右侧二维码（紧贴右边框）
+                // 右侧二维码
                 const qrSize = 85;
                 const qrX = 750 - padding - qrSize;
-                const qrY = textY - 5;
+                const qrY = textY;
                 
                 // 绘制二维码背景
                 ctx.fillStyle = 'white';
@@ -472,13 +492,7 @@
                 ctx.fillStyle = '#6b7280';
                 ctx.font = 'bold 14px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText('扫码查看更多', qrX + qrSize/2, qrY - 20);
-                
-                // 版权信息（紧贴底部边框）
-                ctx.fillStyle = '#9ca3af';
-                ctx.font = '14px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('© 2024 摸鱼海报生成器 | 仅供娱乐使用', 375, 1240);
+                ctx.fillText('扫码查看更多', qrX + qrSize/2, qrY - 15);
                 
                 // 显示海报
                 container.innerHTML = `<img src="${canvas.toDataURL('image/png')}" alt="摸鱼海报" class="w-full h-auto rounded-lg shadow-xl" />`;
