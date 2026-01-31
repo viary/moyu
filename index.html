@@ -71,6 +71,13 @@
       #drawCanvas {
         display: none;
       }
+      /* 图片容器强制居中，解决整体居中问题 */
+      .img-wrap {
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
     </style>
   </head>
   <body class="bg-gradient-to-br from-amber-50 via-stone-50 to-amber-100 min-h-screen">
@@ -179,8 +186,8 @@
 
           <!-- 动态Canvas：高度随内容自适应 -->
           <canvas id="drawCanvas" width="750"></canvas>
-          <!-- 展示绘制完成的图片 -->
-          <div id="newsImageContainer" class="min-h-48 flex justify-center items-center"></div>
+          <!-- 展示绘制完成的图片：新增专属居中类 -->
+          <div id="newsImageContainer" class="min-h-48 img-wrap"></div>
         </section>
       </div>
 
@@ -286,9 +293,8 @@
         drawCustomNewsImage()
       }
 
-      // 【核心工具函数】Canvas文字自动换行（解决超长文字不换行问题）
+      // 【核心工具函数】Canvas文字自动换行（支持所有文本，解决微语超出）
       function drawTextWrap(ctx, text, x, y, maxWidth, lineHeight) {
-        // 入参兜底，避免空值报错
         if (!ctx || !text) return y
         const words = text.split('')
         let currentText = ''
@@ -297,12 +303,10 @@
         const _maxWidth = maxWidth || 650
         const _lineHeight = lineHeight || 45
 
-        // 逐字拆分，判断是否超出最大宽度
         for (let i = 0; i < words.length; i++) {
           const testText = currentText + words[i]
           const testWidth = ctx.measureText(testText).width
           if (testWidth > _maxWidth && i > 0) {
-            // 超出宽度，绘制当前行，重置内容
             ctx.fillText(currentText, currentX, currentY)
             currentText = words[i]
             currentY += _lineHeight
@@ -310,13 +314,11 @@
             currentText = testText
           }
         }
-        // 绘制最后一行
         ctx.fillText(currentText, currentX, currentY)
-        // 返回最后一行的Y坐标，用于计算总高度
         return currentY
       }
 
-      // 【核心函数】自定义绘制早报图片（健壮性拉满，无低级错误）
+      // 【核心函数】自定义绘制早报图片（修复所有视觉问题，健壮性拉满）
       async function drawCustomNewsImage() {
         const date = document.getElementById('dateInput').value
         if (!date) {
@@ -335,7 +337,7 @@
         `
 
         try {
-          // 1. 获取接口JSON数据（新闻+微语），增加响应状态详细判断
+          // 1. 获取接口JSON数据
           const jsonUrl = `https://60s-static.viki.moe/60s/${date}.json`
           const response = await fetch(jsonUrl)
           if (!response.ok) {
@@ -343,25 +345,26 @@
           }
           const newsData = await response.json()
 
-          // 2. 数据校验：确保核心字段存在，避免后续绘制报错
+          // 2. 数据校验+兜底
           if (!newsData || !Array.isArray(newsData.news)) {
             throw new Error('接口返回数据格式异常，缺少新闻列表')
           }
-          // 微语字段兜底，避免空值
           newsData.tip = newsData.tip || '心有所向，素履以往'
+          // 微语内容预处理，避免过长
+          const tipText = `💬 每日微语：${newsData.tip}`
 
-          // 3. 初始化Canvas基础配置（所有变量提前声明，避免未定义）
+          // 3. 初始化Canvas基础配置
           const canvas = document.getElementById('drawCanvas')
           if (!canvas) throw new Error('未找到Canvas画布元素')
           const ctx = canvas.getContext('2d')
           if (!ctx) throw new Error('无法获取Canvas绘制上下文')
           
-          const canvasWidth = 750 // 固定画布宽度，适配手机
+          const canvasWidth = 750 // 固定画布宽度
           const paddingX = 50 // 左右内边距
-          const contentMaxWidth = canvasWidth - paddingX * 2 // 文字最大绘制宽度
-          let totalContentHeight = 0 // 核心：提前声明画布总高度变量，避免未定义
+          const contentMaxWidth = canvasWidth - paddingX * 2 // 所有文本最大绘制宽度
+          let totalContentHeight = 0 // 画布总高度
 
-          // 基础样式配置（可按需修改，所有值兜底）
+          // 基础样式配置
           const style = {
             titleFont: 'bold 36px PingFang SC, Microsoft YaHei',
             titleColor: '#854d0e',
@@ -371,48 +374,48 @@
             tipColor: '#d97706',
             customFont: '22px PingFang SC, Microsoft YaHei',
             customColor: '#6b7280',
-            lineHeight: 45, // 普通行高
-            bigLineHeight: 60, // 分隔/微语行高
-            titleTop: 60, // 标题顶部间距
-            separatorTop: 80, // 分隔线顶部间距
-            newsTop: 120, // 新闻列表顶部间距
+            lineHeight: 45,
+            bigLineHeight: 60,
+            titleTop: 60,
+            separatorTop: 80,
+            newsTop: 120,
           }
 
-          // 4. 预计算所有内容的高度，动态设置Canvas高度（无空白核心，变量无报错）
+          // 4. 预计算所有内容高度（核心：包含微语的换行高度，解决微语超出）
           ctx.font = style.newsFont || '24px 微软雅黑'
-          totalContentHeight = style.newsTop // 初始化高度（新闻开始前）
-
-          // 预计算每条新闻的高度（含自动换行，增加异常兜底）
+          totalContentHeight = style.newsTop
+          // 预计算新闻高度
           for (let i = 0; i < newsData.news.length; i++) {
             const newsContent = newsData.news[i] || ''
             const newsText = `${i + 1}. ${newsContent}`
-            // 计算单条新闻换行后的总高度，避免宽度为0报错
             const textWidth = ctx.measureText(newsText).width || 0
             const testLines = Math.max(1, Math.ceil(textWidth / contentMaxWidth))
             totalContentHeight += testLines * (style.lineHeight || 45)
           }
-
-          // 加上微语、自定义信息、底部间距的高度（所有值兜底，避免NaN）
-          totalContentHeight += (style.bigLineHeight || 60) * 2 // 微语区域
-          totalContentHeight += (style.lineHeight || 45) * 2 + 40 // 自定义信息+底部留白
-          // 最终兜底：确保高度不小于500，避免画布过短报错
+          // 预计算微语高度（关键：按实际换行计算，解决超出）
+          ctx.font = style.tipFont || 'italic 24px 微软雅黑'
+          const tipWidth = ctx.measureText(tipText).width || 0
+          const tipLines = Math.max(1, Math.ceil(tipWidth / contentMaxWidth))
+          totalContentHeight += tipLines * (style.lineHeight || 45) + style.bigLineHeight / 2
+          // 预计算自定义信息+底部留白高度
+          totalContentHeight += (style.lineHeight || 45) * 2 + 60 // 增加一点留白，避免内容贴底
+          // 最终兜底：最小高度500
           totalContentHeight = Math.max(500, totalContentHeight)
-
-          // 动态设置Canvas高度，无未定义错误（核心：使用已声明的totalContentHeight）
+          // 动态设置Canvas高度
           canvas.height = totalContentHeight
 
-          // 5. 开始绘制内容（逐区域绘制，所有步骤兜底）
-          // 5.1 绘制白色背景（确保填充整个画布）
+          // 5. 开始绘制内容
+          // 5.1 绘制白色背景
           ctx.fillStyle = '#ffffff'
           ctx.fillRect(0, 0, canvasWidth, totalContentHeight)
 
-          // 5.2 绘制标题（居中，样式兜底）
+          // 5.2 绘制标题
           ctx.fillStyle = style.titleColor || '#854d0e'
           ctx.font = style.titleFont || 'bold 36px 微软雅黑'
           ctx.textAlign = 'center'
           ctx.fillText(`每日60s早报 · ${date}`, canvasWidth / 2, style.titleTop || 60)
 
-          // 5.3 绘制标题下分隔线（避免线宽为0报错）
+          // 5.3 绘制标题下分隔线
           ctx.strokeStyle = '#fbbf24'
           ctx.lineWidth = 2
           ctx.beginPath()
@@ -420,57 +423,51 @@
           ctx.lineTo(canvasWidth - paddingX, style.separatorTop || 80)
           ctx.stroke()
 
-          // 5.4 绘制新闻列表（自动换行，变量无报错）
+          // 5.4 绘制新闻列表（自动换行）
           ctx.fillStyle = style.newsColor || '#1f2937'
           ctx.font = style.newsFont || '24px 微软雅黑'
           ctx.textAlign = 'left'
-          let currentNewsY = style.newsTop || 120 // 新闻绘制起始Y坐标，兜底
-
-          // 遍历新闻，逐行绘制+自动换行，增加兜底
+          let currentY = style.newsTop || 120 // 绘制起始Y坐标
           for (let i = 0; i < newsData.news.length; i++) {
             const newsContent = newsData.news[i] || ''
             const newsText = `${i + 1}. ${newsContent}`
-            // 绘制并获取当前新闻最后一行的Y坐标，传入所有兜底参数
-            currentNewsY = drawTextWrap(
-              ctx,
-              newsText,
-              paddingX,
-              currentNewsY,
-              contentMaxWidth,
-              style.lineHeight
-            )
-            // 换行后追加行高，保证间距，兜底
-            currentNewsY += style.lineHeight || 45
+            // 绘制新闻并更新Y坐标
+            currentY = drawTextWrap(ctx, newsText, paddingX, currentY, contentMaxWidth, style.lineHeight)
+            currentY += style.lineHeight || 45
           }
 
-          // 5.5 绘制每日微语（tip）- 保留核心需求，样式兜底
+          // 5.5 绘制每日微语（核心：调用自动换行，彻底解决超出）
           ctx.fillStyle = style.tipColor || '#d97706'
           ctx.font = style.tipFont || 'italic 24px 微软雅黑'
-          ctx.textAlign = 'center'
-          const tipY = currentNewsY + (style.bigLineHeight || 60) / 2
-          ctx.fillText(`💬 每日微语：${newsData.tip}`, canvasWidth / 2, tipY)
-
-          // 微语下分隔线（避免无坐标报错）
+          ctx.textAlign = 'left' // 改为左对齐，配合自动换行，避免居中超出
+          // 微语顶部增加间距
+          currentY += style.bigLineHeight / 4
+          // 绘制微语（自动换行）
+          currentY = drawTextWrap(ctx, tipText, paddingX, currentY, contentMaxWidth, style.lineHeight)
+          // 微语下分隔线（随微语高度动态调整）
           ctx.strokeStyle = '#fcd34d'
           ctx.beginPath()
-          ctx.moveTo(paddingX + 50, tipY + 20)
-          ctx.lineTo(canvasWidth - paddingX - 50, tipY + 20)
+          ctx.moveTo(paddingX + 50, currentY + 20)
+          ctx.lineTo(canvasWidth - paddingX - 50, currentY + 20)
           ctx.stroke()
+          currentY += style.bigLineHeight / 2
 
-          // 5.6 绘制自定义信息（替换官方底部信息，可按需修改，兜底）
+          // 5.6 绘制自定义信息
           ctx.fillStyle = style.customColor || '#6b7280'
           ctx.font = style.customFont || '22px 微软雅黑'
-          const customY1 = tipY + (style.bigLineHeight || 60)
+          ctx.textAlign = 'center'
+          const customY1 = currentY
           const customY2 = customY1 + (style.lineHeight || 45)
           ctx.fillText('—— 自定义60s早报 · 专属制作', canvasWidth / 2, customY1)
           ctx.fillText('每日更新 · 数据来源于公开网络', canvasWidth / 2, customY2)
 
-          // 6. Canvas转PNG图片，展示到页面（增加图片质量兜底）
+          // 6. Canvas转PNG图片，展示（移除多余文字，仅保留图片）
           const customImageUrl = canvas.toDataURL('image/png', 1.0)
           if (!customImageUrl) throw new Error('Canvas转换图片失败')
 
+          // 仅渲染图片，无多余文字，新增居中样式
           container.innerHTML = `
-            <div class="w-full max-w-2xl mx-auto bg-stone-50/50 rounded-lg p-4 border border-stone-200">
+            <div class="bg-stone-50/50 rounded-lg p-4 border border-stone-200 img-wrap">
                 <img
                     src="${customImageUrl}"
                     alt="${date} 自定义60秒早报图片"
@@ -478,10 +475,8 @@
                     title="点击可保存图片"
                 >
             </div>
-            <p class="text-center text-sm text-stone-500 mt-3">图片已自适应内容，无多余空白 | 点击图片可保存</p>
           `
         } catch (error) {
-          // 细化错误提示，方便排查问题，不显示无意义的未定义错误
           const errorMsg = error.message || '未知绘制错误'
           container.innerHTML = `
             <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center w-full max-w-2xl mx-auto">
@@ -489,11 +484,11 @@
                 <p class="text-sm text-red-600">${errorMsg}，请选择其他有效日期</p>
             </div>
           `
-          console.error('详细绘制错误：', error) // 控制台输出详细错误，方便排查（不展示给用户）
+          console.error('详细绘制错误：', error)
         }
       }
 
-      // 页面加载完成初始化，增加兜底
+      // 页面初始化兜底
       try {
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', init)
