@@ -159,6 +159,11 @@
                 width: 100%;
             }
         }
+        
+        /* 隐藏canvas */
+        #drawCanvas {
+            display: none;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -203,27 +208,13 @@
                 </div>
             </div>
             
-            <canvas id="drawCanvas" width="750" height="1050"></canvas>
+            <canvas id="drawCanvas" width="750" height="1150"></canvas>
             
             <div id="posterContainer" class="min-h-[300px] flex flex-col items-center justify-center p-6">
                 <div class="loading mb-4"></div>
                 <p class="text-stone-600">正在生成精美海报...</p>
             </div>
         </section>
-        
-        <!-- 二维码配置提示 -->
-        <div class="bg-white rounded-lg p-6 mb-6 border border-amber-200">
-            <h3 class="text-lg font-bold text-amber-800 mb-2">🔧 二维码配置</h3>
-            <p class="text-stone-600 mb-4">要添加自定义二维码，请修改下面代码中的二维码Base64数据：</p>
-            <div class="bg-stone-100 p-4 rounded-lg text-sm font-mono overflow-x-auto">
-                <p class="text-stone-700">// 在JavaScript代码中找到下面这行：</p>
-                <p class="text-amber-700">const qrCodeBase64 = "data:image/png;base64,这里是你的二维码Base64数据...";</p>
-                <p class="text-stone-700 mt-2">// 替换引号内的内容为你自己的二维码Base64数据</p>
-            </div>
-            <div class="mt-4 text-sm text-stone-500">
-                <p>💡 提示：可以使用<a href="https://www.qrcode-monkey.com/" target="_blank" class="text-amber-600 hover:underline">在线二维码生成器</a>生成二维码，然后使用<a href="https://base64.guru/converter/encode/image" target="_blank" class="text-amber-600 hover:underline">Base64转换工具</a>转换为Base64格式。</p>
-            </div>
-        </div>
         
         <footer class="text-center text-stone-500 text-sm mt-12">
             <p>数据来源：摸鱼 API | 每日更新 | 仅供娱乐使用</p>
@@ -431,9 +422,9 @@
                 const canvas = document.getElementById('drawCanvas')
                 const ctx = canvas.getContext('2d')
                 
-                // 设置画布大小
+                // 设置画布大小（增加高度，避免内容溢出）
                 const width = 750
-                const height = 1050
+                const height = 1150  // 增加高度
                 canvas.width = width
                 canvas.height = height
                 
@@ -568,7 +559,7 @@
                 
                 y += 40
 
-                // 5. 假期信息
+                // 5. 假期信息（优化位置，避免溢出）
                 ctx.fillStyle = '#1e293b'
                 ctx.font = 'bold 26px "Noto Sans SC"'
                 ctx.fillText('⏳ 假期信息', padding, y)
@@ -580,31 +571,21 @@
                 
                 const holidayText = `下次假期：${data.nextHoliday.name}`
                 ctx.fillText(holidayText, padding, y)
-                y += 30
+                y += 35
                 
                 const holidayDays = `倒计时：还有 ${data.nextHoliday.until} 天`
                 ctx.fillText(holidayDays, padding, y)
-                y += 40
+                y += 35
                 
                 const daysToYearEnd = 365 - data.progress.year.passed
                 const yearEndText = `距离年末：${daysToYearEnd} 天`
                 ctx.fillText(yearEndText, padding, y)
-                y += 60
+                y += 50
 
-                // 6. 底部信息和二维码
-                ctx.strokeStyle = '#e5e7eb'
-                ctx.lineWidth = 1
-                ctx.beginPath()
-                ctx.moveTo(padding, y)
-                ctx.lineTo(width - padding, y)
-                ctx.stroke()
-                
-                y += 40
-                
-                // 绘制二维码（右下角）
+                // 6. 绘制二维码（在底部信息上方）
                 const qrSize = 80
                 const qrX = width - padding - qrSize
-                const qrY = height - padding - qrSize - 30
+                const qrY = y + 20
                 
                 await drawQRCode(ctx, qrX, qrY, qrSize)
                 
@@ -614,7 +595,19 @@
                 ctx.textAlign = 'right'
                 ctx.fillText('扫码查看更多', qrX + qrSize/2, qrY - 10)
                 
-                // 版权信息
+                // 底部信息（左边部分）
+                y += 20
+                
+                // 底部横线
+                ctx.strokeStyle = '#e5e7eb'
+                ctx.lineWidth = 1
+                ctx.beginPath()
+                ctx.moveTo(padding, y)
+                ctx.lineTo(width - padding - qrSize - 20, y) // 留出二维码位置
+                ctx.stroke()
+                
+                y += 40
+                
                 ctx.fillStyle = '#6b7280'
                 ctx.font = '16px "Noto Sans SC"'
                 ctx.textAlign = 'left'
@@ -636,9 +629,6 @@
                             <button onclick="downloadPoster()" class="btn btn-primary px-6 py-3">
                                 📥 下载海报
                             </button>
-                            <button onclick="sharePoster()" class="btn btn-secondary px-6 py-3">
-                                🔗 分享海报
-                            </button>
                         </div>
                     </div>
                 `
@@ -658,26 +648,6 @@
                     </div>
                 `
             }
-        }
-
-        // 分享功能（简单实现）
-        function sharePoster() {
-            const canvas = document.getElementById('drawCanvas')
-            canvas.toBlob(function(blob) {
-                const file = new File([blob], "摸鱼海报.png", { type: "image/png" });
-                
-                if (navigator.share && navigator.canShare({ files: [file] })) {
-                    navigator.share({
-                        files: [file],
-                        title: '我的摸鱼海报',
-                        text: '看看我的每日摸鱼海报！'
-                    });
-                } else {
-                    // 如果不支持分享，提示下载
-                    downloadPoster()
-                    alert('已保存到本地，可以手动分享给朋友哦～')
-                }
-            });
         }
 
         // 初始化页面
