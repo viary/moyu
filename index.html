@@ -3,29 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <title>每天 60s 读懂世界 - 每日新闻图片</title>
-    <meta name="description" content="每天60秒读懂世界 - 每日新闻图片精选" />
+    <title>每天 60s 读懂世界 - 自定义早报图片</title>
+    <meta name="description" content="每天60秒读懂世界 - 自定义每日新闻图片" />
     <meta name="theme-color" content="#fef3c7" />
     <link rel="shortcut icon" href="/favicon.ico" />
-    <!-- Tailwind CSS Play CDN (稳定且不会被拦截) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-      /* 系统默认字体优先级 */
+      /* 保留原有美观样式，无修改 */
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Helvetica Neue',
           Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
-
-      /* 毛笔字效果 */
       .brush-text {
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         letter-spacing: 0.15em;
       }
-
-      /* 印章效果 */
       .seal {
         writing-mode: vertical-rl;
         text-orientation: upright;
@@ -34,19 +29,13 @@
         font-weight: 700;
         letter-spacing: 0.1em;
       }
-
-      /* 平滑滚动 */
       html {
         scroll-behavior: smooth;
       }
-
-      /* 日期输入样式 */
       input[type='date']::-webkit-calendar-picker-indicator {
         filter: sepia(1) hue-rotate(10deg) saturate(1.5);
         cursor: pointer;
       }
-
-      /* 加载动画 */
       @keyframes fade-in {
         from {
           opacity: 0;
@@ -57,16 +46,12 @@
           transform: translateY(0);
         }
       }
-
       .fade-in {
         animation: fade-in 0.5s ease-out;
       }
-
-      /* 装饰性边框 */
       .decorative-border {
         position: relative;
       }
-
       .decorative-border::before,
       .decorative-border::after {
         content: '❋';
@@ -74,20 +59,22 @@
         color: rgb(251 191 36 / 0.4);
         font-size: 0.75rem;
       }
-
       .decorative-border::before {
         top: 0;
         left: 0;
       }
-
       .decorative-border::after {
         bottom: 0;
         right: 0;
       }
+      /* 隐藏Canvas（仅用于绘制，不直接展示） */
+      #drawCanvas {
+        display: none;
+      }
     </style>
   </head>
   <body class="bg-gradient-to-br from-amber-50 via-stone-50 to-amber-100 min-h-screen">
-    <!-- 背景装饰 -->
+    <!-- 背景装饰（保留原有） -->
     <div class="fixed inset-0 opacity-5 pointer-events-none">
       <div class="absolute top-20 left-10 w-32 h-32 border-2 border-amber-400 rounded-full"></div>
       <div class="absolute top-40 right-20 w-24 h-24 border border-stone-400 rounded-full"></div>
@@ -98,10 +85,9 @@
     </div>
 
     <div class="relative z-10 max-w-4xl mx-auto px-4 py-8 md:py-12">
-      <!-- 报头（简化保留核心美观元素） -->
+      <!-- 报头（保留原有） -->
       <header class="text-center mb-8 md:mb-12 fade-in">
         <div class="inline-block relative">
-          <!-- 顶部装饰线 -->
           <div class="flex items-center justify-center mb-4 gap-2">
             <div
               class="w-16 h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent"
@@ -119,10 +105,9 @@
           </h1>
 
           <p class="text-base md:text-lg text-stone-600 tracking-widest font-light mb-4">
-            每日新闻图片 · 日期可选
+            自定义新闻图片 · 日期可选
           </p>
 
-          <!-- 日期和状态 -->
           <div class="flex items-center justify-center gap-4 text-sm text-stone-500">
             <span id="currentDate" class="tracking-wide"></span>
             <span class="text-amber-400">❋</span>
@@ -132,7 +117,6 @@
             </div>
           </div>
 
-          <!-- 底部装饰线 -->
           <div class="flex items-center justify-center mt-4 gap-2">
             <div
               class="w-16 h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent"
@@ -145,27 +129,26 @@
         </div>
       </header>
 
-      <!-- 核心内容区：仅保留日期选择 + 早报图片 -->
+      <!-- 核心内容区：日期选择 + 自定义图片展示 -->
       <div class="grid grid-cols-1 gap-6 md:gap-8 mb-8">
         <section
           class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-stone-200/60 p-6 md:p-8 decorative-border fade-in"
           style="animation-delay: 0.1s"
         >
-          <!-- 标题栏 + 日期选择器（保留核心功能） -->
           <div
             class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-4 border-b border-stone-200/60"
           >
             <div class="flex items-center gap-3">
               <div class="seal text-amber-700 text-xs bg-amber-50">今 日</div>
-              <h2 class="text-2xl md:text-3xl font-semibold text-stone-800 brush-text">新闻图片</h2>
+              <h2 class="text-2xl md:text-3xl font-semibold text-stone-800 brush-text">自定义新闻图片</h2>
             </div>
 
-            <!-- 日期选择器（完整保留切换功能） -->
+            <!-- 日期选择器（保留原有功能） -->
             <div class="flex flex-wrap gap-2">
               <input
                 type="date"
                 id="dateInput"
-                onchange="updateButtonStates(); loadNewsImage();"
+                onchange="updateButtonStates(); drawCustomNewsImage();"
                 class="px-3 py-2 bg-amber-50/50 border border-stone-300 rounded-lg text-stone-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
               />
               <button
@@ -194,12 +177,14 @@
             </div>
           </div>
 
-          <!-- 仅保留早报图片展示容器 -->
+          <!-- 1. 隐藏的Canvas：用于绘制图片（不直接展示） -->
+          <canvas id="drawCanvas" width="750" height="1334"></canvas>
+          <!-- 2. 展示绘制完成的图片 -->
           <div id="newsImageContainer" class="min-h-48 flex justify-center items-center"></div>
         </section>
       </div>
 
-      <!-- 简化页脚（保留美观，删除多余链接） -->
+      <!-- 简化页脚（保留原有） -->
       <footer
         class="text-center py-8 text-stone-600 space-y-3 fade-in"
         style="animation-delay: 0.4s"
@@ -215,7 +200,7 @@
         </div>
 
         <p class="text-sm tracking-wide">
-          数据来源于公开网络 ❋ 每日自动更新（UTC+8）
+          自定义早报图片 ❋ 数据来源于公开网络
         </p>
 
         <div class="flex items-center justify-center gap-2 mt-3">
@@ -237,45 +222,31 @@
         const today = new Date()
         const todayStr = formatDate(today)
 
-        // 设置最大可选日期为今天
         dateInput.max = todayStr
-
-        // 解析 URL 参数（简化，仅用于初始化）
         const urlParams = new URLSearchParams(window.location.search)
         const dateParam = urlParams.get('date')
 
-        // 验证日期参数格式
         let initialDate = todayStr
         if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
           const paramDate = new Date(dateParam)
           const todayDate = new Date(todayStr)
-
-          // 确保日期参数不晚于今天
           if (paramDate <= todayDate && !isNaN(paramDate.getTime())) {
             initialDate = dateParam
           }
         }
 
-        // 设置日期输入框的值
         dateInput.value = initialDate
-
-        // 显示顶部日期
-        const displayDate = new Date(initialDate)
-        updateHeaderDate(displayDate)
-
-        // 更新按钮状态
+        updateHeaderDate(new Date(initialDate))
         updateButtonStates()
-
-        // 自动加载早报图片
-        loadNewsImage()
+        drawCustomNewsImage() // 初始化绘制自定义图片
       }
 
-      // 格式化日期为 YYYY-MM-DD
+      // 格式化日期
       function formatDate(date) {
         return date.toISOString().split('T')[0]
       }
 
-      // 更新顶部显示的日期
+      // 更新顶部日期
       function updateHeaderDate(date) {
         const year = date.getFullYear()
         const month = date.getMonth() + 1
@@ -288,40 +259,35 @@
         ).textContent = `${year}年${month}月${day}日 星期${weekDay}`
       }
 
-      // 更新按钮状态（禁用今天的后一天按钮）
+      // 更新按钮状态
       function updateButtonStates() {
         const dateInput = document.getElementById('dateInput')
         const selectedDate = dateInput.value
         const today = formatDate(new Date())
         const nextBtn = document.getElementById('nextBtn')
-
-        if (selectedDate === today) {
-          nextBtn.disabled = true
-        } else {
-          nextBtn.disabled = false
-        }
+        nextBtn.disabled = selectedDate === today
       }
 
-      // 一键跳转到今天
+      // 跳转到今天
       function setToday() {
         const today = new Date()
         document.getElementById('dateInput').value = formatDate(today)
         updateButtonStates()
-        loadNewsImage()
+        drawCustomNewsImage()
       }
 
-      // 调整日期（前一天/后一天）
+      // 调整日期
       function adjustDate(days) {
         const dateInput = document.getElementById('dateInput')
         const currentDate = new Date(dateInput.value || new Date())
         currentDate.setDate(currentDate.getDate() + days)
         dateInput.value = formatDate(currentDate)
         updateButtonStates()
-        loadNewsImage()
+        drawCustomNewsImage()
       }
 
-      // 加载对应日期的早报图片（核心函数）
-      async function loadNewsImage() {
+      // 核心函数：绘制自定义早报图片（删除他人信息，添加自己的信息）
+      async function drawCustomNewsImage() {
         const date = document.getElementById('dateInput').value
         if (!date) {
           alert('请选择日期')
@@ -329,36 +295,95 @@
         }
 
         const container = document.getElementById('newsImageContainer')
-        // 加载中提示
-        container.innerHTML = '<div class="text-center py-12 text-stone-500">图片加载中...</div>'
+        container.innerHTML = `
+          <div class="text-center py-16 text-stone-500">
+              <svg class="w-8 h-8 mx-auto mb-3 text-amber-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              <p>正在绘制自定义早报图片...</p>
+          </div>
+        `
 
         try {
-          // 早报图片地址
-          const imageUrl = `https://60s-static.viki.moe/images/${date}.png`
+          // 步骤1：获取JSON数据（绘制图片的素材）
+          const jsonUrl = `https://60s-static.viki.moe/60s/${date}.json`
+          const response = await fetch(jsonUrl)
+          if (!response.ok) throw new Error('JSON数据加载失败')
+          const newsData = await response.json()
 
-          // 渲染图片（居中展示，自适应宽度）
+          // 步骤2：获取Canvas上下文，准备绘制
+          const canvas = document.getElementById('drawCanvas')
+          const ctx = canvas.getContext('2d')
+          const canvasWidth = canvas.width
+          const canvasHeight = canvas.height
+
+          // 步骤3：开始自定义绘制（完全由你掌控，想画什么就画什么）
+          // 3.1 绘制背景（白色底，可改颜色）
+          ctx.fillStyle = '#ffffff'
+          ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+
+          // 3.2 绘制图片标题（顶部）
+          ctx.fillStyle = '#854d0e' // 标题颜色
+          ctx.font = 'bold 36px PingFang SC, Microsoft YaHei' // 字体大小/样式
+          ctx.textAlign = 'center'
+          ctx.fillText(`每日60s早报 · ${date}`, canvasWidth / 2, 60)
+
+          // 3.3 绘制分隔线（标题下方）
+          ctx.strokeStyle = '#fbbf24'
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.moveTo(100, 80)
+          ctx.lineTo(650, 80)
+          ctx.stroke()
+
+          // 3.4 绘制新闻列表（核心内容，不绘制官方底部信息）
+          ctx.fillStyle = '#1f2937' // 新闻文字颜色
+          ctx.font = '24px PingFang SC, Microsoft YaHei' // 新闻字体大小
+          ctx.textAlign = 'left'
+          const newsStartY = 120 // 新闻开始的Y坐标
+          const lineHeight = 45 // 每行新闻的行高
+          const newsMaxWidth = 700 // 新闻最大宽度
+
+          // 遍历新闻数组，绘制每条新闻
+          newsData.news.forEach((news, index) => {
+            const y = newsStartY + (index * lineHeight)
+            // 绘制新闻序号 + 内容
+            ctx.fillText(`${index + 1}. ${news}`, 50, y, newsMaxWidth)
+          })
+
+          // 3.5 绘制自定义信息（替换官方底部信息，添加你自己的内容）
+          const customInfoY = newsStartY + (newsData.news.length * lineHeight) + 60
+          ctx.fillStyle = '#d97706' // 自定义信息颜色
+          ctx.font = 'bold 28px PingFang SC, Microsoft YaHei'
+          ctx.textAlign = 'center'
+          // 自定义内容1：你的签名/公众号
+          ctx.fillText('—— 自定义早报 · 专属制作', canvasWidth / 2, customInfoY)
+          // 自定义内容2：联系方式/备注（可选）
+          ctx.font = '20px PingFang SC, Microsoft YaHei'
+          ctx.fillText('每日更新 · 仅供学习交流', canvasWidth / 2, customInfoY + 40)
+
+          // 步骤4：将Canvas转换成图片，展示在页面上
+          const customImageUrl = canvas.toDataURL('image/png') // 转成PNG图片
           container.innerHTML = `
             <div class="w-full max-w-2xl mx-auto bg-stone-50/50 rounded-lg p-4 border border-stone-200">
                 <img
-                    src="${imageUrl}"
-                    alt="${date} 60秒早报图片"
+                    src="${customImageUrl}"
+                    alt="${date} 自定义60秒早报图片"
                     class="w-full h-auto rounded shadow-lg"
-                    onerror="this.parentElement.innerHTML='<div class=\\'text-center py-8 text-stone-400\\'>该日期图片加载失败，请尝试其他日期</div>'"
                 >
             </div>
           `
         } catch (error) {
-          // 错误提示
           container.innerHTML = `
             <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center w-full max-w-2xl mx-auto">
-                <p class="text-red-700 mb-2">加载失败</p>
-                <p class="text-sm text-red-600">该日期暂无早报数据，请选择其他日期</p>
+                <p class="text-red-700 mb-2">绘制失败</p>
+                <p class="text-sm text-red-600">${error.message}，请选择其他日期</p>
             </div>
           `
         }
       }
 
-      // 页面加载完成后初始化
+      // 页面加载完成初始化
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init)
       } else {
