@@ -63,7 +63,7 @@
             height: 50px;
             border: 3px solid #f3f4f6;
             border-radius: 50%;
-            border-top-color = '#f59e0b';
+            border-top-color: #f59e0b;
             animation: spin 1s ease-in-out infinite;
         }
         
@@ -193,35 +193,43 @@
             }
         }
 
-        // 简化的进度条绘制函数 - 所有文字都放在外部，确保对齐
+        // 优化的进度条绘制函数 - 将文字集成到进度条内部
         function drawProgress(ctx, x, y, width, progress, color, label, value) {
             // 绘制进度条背景
             ctx.fillStyle = '#f3f4f6';
             ctx.beginPath();
-            ctx.roundRect(x, y, width, 40, 20);
+            ctx.roundRect(x, y, width, 44, 22);
             ctx.fill();
             
             // 绘制进度条前景
-            const progressWidth = Math.max(40, width * progress);
+            const progressWidth = Math.max(50, width * progress);
             ctx.fillStyle = color;
             ctx.beginPath();
-            ctx.roundRect(x, y, progressWidth, 40, 20);
+            ctx.roundRect(x, y, progressWidth, 44, 22);
             ctx.fill();
             
-            // 在进度条上方绘制标签（左侧）
-            ctx.fillStyle = '#000000';
-            ctx.font = 'bold 18px sans-serif';
+            // 设置文字颜色和字体
+            ctx.fillStyle = '#ffffff'; // 使用白色文字，在彩色进度条上更清晰
+            ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-            ctx.fillText(label, x, y - 25); // 在进度条上方25px处
             
-            // 在进度条上方绘制数值（右侧）
-            ctx.font = 'bold 16px sans-serif';
+            // 左侧文字（进度名称）
+            ctx.fillText(label, x + 15, y + 22);
+            
+            // 右侧文字（天数和百分比）
             ctx.textAlign = 'right';
-            ctx.fillText(value, x + width, y - 25); // 在进度条上方25px处
+            // 如果进度条宽度足够，文字放在进度条内部
+            if (progressWidth > 180) {
+                ctx.fillText(value, x + progressWidth - 15, y + 22);
+            } else {
+                // 如果进度条宽度不够，文字放在进度条背景外部右侧
+                ctx.fillStyle = '#000000'; // 外部文字用黑色
+                ctx.fillText(value, x + width - 15, y + 22);
+            }
             
             // 返回下一个Y坐标
-            return y + 60; // 进度条高度40 + 间距20
+            return y + 64; // 进度条高度44 + 间距20
         }
 
         // 加载二维码
@@ -345,26 +353,23 @@
                 
                 // 本周进度
                 const weekProgress = data.progress.week.passed / data.progress.week.total;
-                const weekY = y + 25; // 文字在进度条上方25px处，所以进度条从y开始
-                y = drawProgress(ctx, padding, weekY, contentWidth, weekProgress,
+                y = drawProgress(ctx, padding, y, contentWidth, weekProgress,
                     '#3b82f6', '本周进度',
-                    `${data.progress.week.passed}/${data.progress.week.total}天 (${Math.round(weekProgress * 100)}%)`
+                    `${data.progress.week.passed}/${data.progress.week.total}天 ${Math.round(weekProgress * 100)}%`
                 );
                 
                 // 本月进度
                 const monthProgress = data.progress.month.passed / data.progress.month.total;
-                const monthY = y + 25; // 调整y坐标
-                y = drawProgress(ctx, padding, monthY, contentWidth, monthProgress,
+                y = drawProgress(ctx, padding, y, contentWidth, monthProgress,
                     '#10b981', '本月进度',
-                    `${data.progress.month.passed}/${data.progress.month.total}天 (${Math.round(monthProgress * 100)}%)`
+                    `${data.progress.month.passed}/${data.progress.month.total}天 ${Math.round(monthProgress * 100)}%`
                 );
                 
                 // 今年进度
                 const yearProgress = data.progress.year.passed / data.progress.year.total;
-                const yearY = y + 25; // 调整y坐标
-                y = drawProgress(ctx, padding, yearY, contentWidth, yearProgress,
+                y = drawProgress(ctx, padding, y, contentWidth, yearProgress,
                     '#f97316', '今年进度',
-                    `${data.progress.year.passed}/${data.progress.year.total}天 (${Math.round(yearProgress * 100)}%)`
+                    `${data.progress.year.passed}/${data.progress.year.total}天 ${Math.round(yearProgress * 100)}%`
                 );
                 y += 40;
                 
