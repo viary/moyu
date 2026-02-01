@@ -672,7 +672,7 @@
                 this.textRenderer.drawText('摸鱼不是偷懒 · 而是给生活加点料', padding, y, 'left', POSTER_CONFIG.colors.textLight);
                 
                 // 调整2：数据来源与二维码间距从12减至6（缩小后续总间距，不拥挤）
-                y += 6;
+                y += 3;
 
                 // 绘制二维码（归位状态，不偏离海报）
                 const qrSize = 80;
@@ -686,7 +686,7 @@
                 this.textRenderer.drawText('扫码查看更多', qrX + qrSize/2, qrY - 22, 'center', POSTER_CONFIG.colors.textLight);
                 
                 // 调整2配套：二维码与最后提示间距从8减至4（进一步缩小总间距）
-                y = qrY + qrSize + 4;
+                y = qrY + qrSize + 2;
                 
                 // 最后提示文字（间距缩小，不拥挤）
                 this.textRenderer.setFont(14);
